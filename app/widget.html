@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -152,11 +152,12 @@
     let searchTimeout = null;
 
     // --- 1. INITIALIZATION ---
-    ZOHO.embeddedApp.on("PageLoad", async function(data) {
-        currentRecordId = data.EntityId;
+ZOHO.embeddedApp.on("PageLoad", async function(data) {
+        
+        // Add [0] here to extract the string from the array!
+        currentRecordId = data.EntityId[0]; 
         
         try {
-            // Fetch the Deal Record (Corrected to uppercase CRM)
             const response = await ZOHO.CRM.API.getRecord({Entity: "Deals", RecordID: currentRecordId});
             currentDealData = response.data[0];
             
