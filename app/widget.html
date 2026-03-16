@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Insurance Verification</title>
+    <script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; background: #f4f5f7; font-size: 14px; }
+        .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 700px; margin: 0 auto; }
+        h2 { margin-top: 0; color: #111; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        
+        /* Grid Layout for Fields */
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; align-items: end; }
+        .field-group { position: relative; }
+        label { display: block; font-weight: 600; color: #555; margin-bottom: 5px; font-size: 12px; text-transform: uppercase; }
+        
+        /* Inputs & Read-only text */
+        .val-display { padding: 8px 0; border-bottom: 1px solid #ddd; min-height: 20px; color: #333; }
+        input[type="text"], select, input[type="date"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        input[disabled], select[disabled] { background: #f9f9f9; color: #777; }
+        
+        /* Hidden elements */
+        .hidden { display: none !important; }
+        
+        /* Autocomplete Dropdown */
+        .autocomplete-list { position: absolute; z-index: 99; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; max-height: 150px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 0 0 4px 4px; }
+        .autocomplete-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
+        .autocomplete-item:hover { background-color: #f0f8ff; }
+
+        /* Buttons */
+        .actions { margin-top: 25px; display: flex; gap: 10px; justify-content: flex-end; }
+        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.2s; }
+        .btn-primary { background: #0073e6; color: white; }
+        .btn-primary:hover { background: #005bb5; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #ccc; }
+        .btn-success { background: #28a745; color: white; }
+        
+        /* Alerts */
+        #message-box { margin-top: 15px; padding: 10px; border-radius: 4px; text-align: center; font-weight: bold; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Insurance Details</h2>
+    <div id="message-box" class="hidden"></div>
+    
+    <div id="read-only-view">
+        <div id="ro-fields-container"></div>
+        <div class="field-row" style="margin-top: 20px;">
+            <div class="field-group">
+                <label>Last Eligible Check Date</label>
+                <div class="val-display" id="ro-last-check"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-view" class="hidden">
+        <div class="field-row">
+            <div class="field-group">
+                <label>Primary Insurance Plan</label>
+                <input type="text" id="edit-primary-name" placeholder="Search Primary..." onkeyup="searchPlan(this, 'edit-primary-id')" autocomplete="off">
+                <input type="hidden" id="edit-primary-id">
+                <div class="autocomplete-list hidden" id="list-edit-primary-name"></div>
+            </div>
+            <div class="field-group">
+                <label>Primary Status</label>
+                <select id="edit-primary-status">
+                    <option value="">-None-</option>
+                    <option value="Active">Active</option>
+                    <option value="Obtaining Policy">Obtaining Policy</option>
+                    <option value="Pending Verification">Pending Verification</option>
+                    <option value="Expired">Expired</option>
+                    <option value="Pending">Pending</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="field-row">
+            <div class="field-group">
+                <label>Secondary Insurance Plan</label>
+                <input type="text" id="edit-secondary-name" placeholder="Search Secondary..." onkeyup="searchPlan(this, 'edit-secondary-id')" autocomplete="off">
+                <input type="hidden" id="edit-secondary-id">
+                <div class="autocomplete-list hidden" id="list-edit-secondary-name"></div>
+            </div>
+            <div class="field-group">
+                <label>Secondary Status</label>
+                <select id="edit-secondary-status">
+                    <option value="">-None-</option>
+                    <option value="Active">Active</option>
+                    <option value="Obtaining Policy">Obtaining Policy</option>
+                    <option value="Pending Verification">Pending Verification</option>
+                    <option value="Expired">Expired</option>
+                    <option value="Pending">Pending</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="field-row">
+            <div class="field-group">
+                <label>HMO Insurance Plan</label>
+                <input type="text" id="edit-hmo-name" placeholder="Search HMO..." onkeyup="searchPlan(this, 'edit-hmo-id')" autocomplete="off">
+                <input type="hidden" id="edit-hmo-id">
+                <div class="autocomplete-list hidden" id="list-edit-hmo-name"></div>
+            </div>
+            <div class="field-group">
+                <label>HMO Status</label>
+                <select id="edit-hmo-status">
+                    <option value="">-None-</option>
+                    <option value="Active">Active</option>
+                    <option value="Obtaining Policy">Obtaining Policy</option>
+                    <option value="Pending Verification">Pending Verification</option>
+                    <option value="Expired">Expired</option>
+                    <option value="Pending">Pending</option>
+                </select>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+        <div class="field-row">
+            <div class="field-group">
+                <label>Billable Insurance Plan (Must be one of above)</label>
+                <select id="edit-billable-select" onfocus="populateBillableOptions()" onchange="syncBillableStatus()">
+                    <option value="">-Select from selected plans-</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label>Billable Status (Auto-synced)</label>
+                <input type="text" id="edit-billable-status" disabled>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions" id="action-buttons">
+        <button class="btn-primary" id="btn-verify" onclick="verifyInsurance()">Verify Insurance</button>
+        <button class="btn-secondary" id="btn-update-mode" onclick="toggleEditMode()">Update Insurance</button>
+    </div>
+    
+    <div class="actions hidden" id="save-buttons">
+        <button class="btn-secondary" onclick="ZOHO.CRM.UI.Popup.close()">Cancel</button>
+        <button class="btn-success" onclick="saveUpdates()">Save & Log</button>
+    </div>
+</div>
+
+<script>
+    let currentRecordId = null;
+    let currentDealData = null;
+    let searchTimeout = null;
+
+    // --- 1. INITIALIZATION ---
+    ZOHO.embeddedApp.on("PageLoad", async function(data) {
+        currentRecordId = data.EntityId;
+        
+        try {
+            // Fetch the Deal Record (Corrected to uppercase CRM)
+            const response = await ZOHO.CRM.API.getRecord({Entity: "Deals", RecordID: currentRecordId});
+            currentDealData = response.data[0];
+            
+            renderReadOnlyView();
+            populateEditForm();
+        } catch (error) {
+            console.error("Error fetching record:", error);
+            showMessage("Failed to load record data. Check console.", true);
+        }
+    });
+
+    ZOHO.embeddedApp.init();
+
+    // --- 2. RENDER READ-ONLY VIEW (Hiding empty fields) ---
+    function renderReadOnlyView() {
+        const container = document.getElementById("ro-fields-container");
+        container.innerHTML = ""; // Clear existing
+
+        const fieldsToCheck = [
+            { plan: "Primary_Insurance_Plan", status: "Primary_Insurance_Status", label: "Primary" },
+            { plan: "Secondary_Insurance_Plans", status: "Secondary_Insurance_Status", label: "Secondary" },
+            { plan: "HMO_Insurance_P", status: "HMO_Insurance_Status", label: "HMO" },
+            { plan: "Billable_Insurance_Plan", status: "Insurance_Status", label: "Billable" }
+        ];
+
+        fieldsToCheck.forEach(f => {
+            if (currentDealData[f.plan] && currentDealData[f.plan].id) {
+                const planName = currentDealData[f.plan].name;
+                const statusVal = currentDealData[f.status] || "No Status";
+                
+                container.innerHTML += `
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label>${f.label} Insurance Plan</label>
+                            <div class="val-display">${planName}</div>
+                        </div>
+                        <div class="field-group">
+                            <label>${f.label} Status</label>
+                            <div class="val-display">${statusVal}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        document.getElementById("ro-last-check").innerText = currentDealData["Last_Eligible_Check_Date"] || "Never";
+    }
+
+    // --- 3. POPULATE EDIT FORM ---
+    function populateEditForm() {
+        const setLookup = (fieldApi, inputIdName, inputIdValue) => {
+            if (currentDealData[fieldApi]) {
+                document.getElementById(inputIdName).value = currentDealData[fieldApi].name;
+                document.getElementById(inputIdValue).value = currentDealData[fieldApi].id;
+            }
+        };
+
+        setLookup("Primary_Insurance_Plan", "edit-primary-name", "edit-primary-id");
+        document.getElementById("edit-primary-status").value = currentDealData["Primary_Insurance_Status"] || "";
+
+        setLookup("Secondary_Insurance_Plans", "edit-secondary-name", "edit-secondary-id");
+        document.getElementById("edit-secondary-status").value = currentDealData["Secondary_Insurance_Status"] || "";
+
+        setLookup("HMO_Insurance_P", "edit-hmo-name", "edit-hmo-id");
+        document.getElementById("edit-hmo-status").value = currentDealData["HMO_Insurance_Status"] || "";
+        
+        // We will handle Billable via the focus event of the select dropdown
+    }
+
+    // --- 4. BUTTON: VERIFY INSURANCE ---
+    async function verifyInsurance() {
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        
+        await ZOHO.CRM.API.updateRecord({
+            Entity: "Deals",
+            APIData: {
+                id: currentRecordId,
+                Last_Eligible_Check_Date: today
+            }
+        });
+        
+        ZOHO.CRM.UI.Popup.close();
+    }
+
+    // --- 5. BUTTON: UPDATE INSURANCE (TOGGLE UI) ---
+    function toggleEditMode() {
+        document.getElementById("read-only-view").classList.add("hidden");
+        document.getElementById("action-buttons").classList.add("hidden");
+        
+        document.getElementById("edit-view").classList.remove("hidden");
+        document.getElementById("save-buttons").classList.remove("hidden");
+    }
+
+    // --- 6. AUTOCOMPLETE SEARCH LOGIC ---
+    function searchPlan(inputElement, hiddenIdField) {
+        clearTimeout(searchTimeout);
+        const query = inputElement.value;
+        const listDiv = document.getElementById("list-" + inputElement.id);
+        
+        if (query.length < 2) {
+            listDiv.classList.add("hidden");
+            if(query.length === 0) document.getElementById(hiddenIdField).value = ""; 
+            return;
+        }
+
+        searchTimeout = setTimeout(async () => {
+            const response = await ZOHO.CRM.API.searchRecord({
+                Entity: "Insurance_Plans",
+                Type: "criteria",
+                Query: `(Name:starts_with:${query})`
+            });
+
+            listDiv.innerHTML = "";
+            
+            if (response.data) {
+                response.data.forEach(plan => {
+                    const item = document.createElement("div");
+                    item.className = "autocomplete-item";
+                    item.innerText = plan.Name;
+                    item.onclick = function() {
+                        inputElement.value = plan.Name;
+                        document.getElementById(hiddenIdField).value = plan.id;
+                        listDiv.classList.add("hidden");
+                        populateBillableOptions();
+                    };
+                    listDiv.appendChild(item);
+                });
+                listDiv.classList.remove("hidden");
+            } else {
+                listDiv.innerHTML = `<div class="autocomplete-item" style="color:gray">No results found</div>`;
+                listDiv.classList.remove("hidden");
+            }
+        }, 400); 
+    }
+
+    document.addEventListener("click", function(e) {
+        if (!e.target.matches('input[type="text"]')) {
+            document.querySelectorAll(".autocomplete-list").forEach(el => el.classList.add("hidden"));
+        }
+    });
+
+    // --- 7. ENFORCE BILLABLE LOGIC ---
+    function populateBillableOptions() {
+        const select = document.getElementById("edit-billable-select");
+        const currentSelection = select.value; 
+        select.innerHTML = '<option value="">-Select from chosen plans-</option>';
+
+        const plans = [
+            { id: document.getElementById("edit-primary-id").value, name: document.getElementById("edit-primary-name").value, type: 'primary' },
+            { id: document.getElementById("edit-secondary-id").value, name: document.getElementById("edit-secondary-name").value, type: 'secondary' },
+            { id: document.getElementById("edit-hmo-id").value, name: document.getElementById("edit-hmo-name").value, type: 'hmo' }
+        ];
+
+        plans.forEach(p => {
+            if (p.id) {
+                const opt = document.createElement("option");
+                opt.value = p.type; 
+                opt.dataset.id = p.id;
+                opt.innerText = p.name;
+                select.appendChild(opt);
+            }
+        });
+
+        if(currentSelection) select.value = currentSelection;
+        syncBillableStatus();
+    }
+
+    function syncBillableStatus() {
+        const select = document.getElementById("edit-billable-select");
+        const statusField = document.getElementById("edit-billable-status");
+        
+        if (select.value === 'primary') statusField.value = document.getElementById("edit-primary-status").value;
+        else if (select.value === 'secondary') statusField.value = document.getElementById("edit-secondary-status").value;
+        else if (select.value === 'hmo') statusField.value = document.getElementById("edit-hmo-status").value;
+        else statusField.value = "";
+    }
+
+    document.getElementById("edit-primary-status").addEventListener('change', syncBillableStatus);
+    document.getElementById("edit-secondary-status").addEventListener('change', syncBillableStatus);
+    document.getElementById("edit-hmo-status").addEventListener('change', syncBillableStatus);
+
+    // --- 8. SAVE UPDATES & CREATE LOG ---
+    async function saveUpdates() {
+        showMessage("", false);
+        
+        const priId = document.getElementById("edit-primary-id").value;
+        const priStat = document.getElementById("edit-primary-status").value;
+        
+        const secId = document.getElementById("edit-secondary-id").value;
+        const secStat = document.getElementById("edit-secondary-status").value;
+        
+        const hmoId = document.getElementById("edit-hmo-id").value;
+        const hmoStat = document.getElementById("edit-hmo-status").value;
+
+        const billableType = document.getElementById("edit-billable-select").value;
+        const billableStat = document.getElementById("edit-billable-status").value;
+
+        if (priId && !priStat) return showMessage("Primary Status is required.", true);
+        if (secId && !secStat) return showMessage("Secondary Status is required.", true);
+        if (hmoId && !hmoStat) return showMessage("HMO Status is required.", true);
+
+        if ((priId || secId || hmoId) && !billableType) {
+            return showMessage("Please select a Billable Insurance Plan.", true);
+        }
+
+        let billableId = null;
+        if (billableType === 'primary') billableId = priId;
+        if (billableType === 'secondary') billableId = secId;
+        if (billableType === 'hmo') billableId = hmoId;
+
+        const today = new Date().toISOString().split('T')[0];
+
+        const dealPayload = {
+            id: currentRecordId,
+            Last_Eligible_Check_Date: today,
+            Primary_Insurance_Plan: priId ? { id: priId } : null,
+            Primary_Insurance_Status: priStat,
+            Secondary_Insurance_Plans: secId ? { id: secId } : null,
+            Secondary_Insurance_Status: secStat,
+            HMO_Insurance_P: hmoId ? { id: hmoId } : null,
+            HMO_Insurance_Status: hmoStat,
+            Billable_Insurance_Plan: billableId ? { id: billableId } : null,
+            Insurance_Status: billableStat 
+        };
+
+        const logPayload = {
+            Client_Service: { id: currentRecordId },
+            Primary_Insurance: priId ? { id: priId } : null,
+            Primary_Status: priStat,
+            Seconday_Insurance: secId ? { id: secId } : null, 
+            Secondary_Status: secStat,
+            HMO_Insurance: hmoId ? { id: hmoId } : null,
+            HMO_Status: hmoStat,
+            Billable_Insurance: billableId ? { id: billableId } : null,
+            Billable_Status: billableStat,
+            Last_Verified_Date: today
+        };
+
+        try {
+            const updateRes = await ZOHO.CRM.API.updateRecord({ Entity: "Deals", APIData: dealPayload });
+            const logRes = await ZOHO.CRM.API.insertRecord({ Entity: "Insurance_Logs", APIData: logPayload });
+
+            if (updateRes.data[0].code === "SUCCESS" && logRes.data[0].code === "SUCCESS") {
+                showMessage("Insurance updated and log created successfully!", false);
+                setTimeout(() => { ZOHO.CRM.UI.Popup.close(); }, 2000);
+            } else {
+                console.error(updateRes, logRes);
+                showMessage("API Error. Check console.", true);
+            }
+        } catch (error) {
+            console.error(error);
+            showMessage("An error occurred while saving.", true);
+        }
+    }
+
+    function showMessage(msg, isError) {
+        const box = document.getElementById("message-box");
+        if (!msg) {
+            box.classList.add("hidden");
+            return;
+        }
+        box.innerText = msg;
+        box.className = isError ? "alert-error" : "alert-success";
+        box.classList.remove("hidden");
+    }
+</script>
+
+</body>
+</html>
