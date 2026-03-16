@@ -239,7 +239,7 @@ ZOHO.embeddedApp.on("PageLoad", async function(data) {
             }
         });
         
-        ZOHO.CRM.UI.Popup.close();
+        ZOHO.CRM.UI.Popup.closeReload();
     }
 
     // --- 5. BUTTON: UPDATE INSURANCE (TOGGLE UI) ---
@@ -421,7 +421,7 @@ ZOHO.embeddedApp.on("PageLoad", async function(data) {
 
             if (updateRes.data[0].code === "SUCCESS" && logRes.data[0].code === "SUCCESS") {
                 showMessage("Insurance updated and log created successfully!", false);
-                setTimeout(() => { ZOHO.CRM.UI.Popup.close(); }, 2000);
+                setTimeout(() => {ZOHO.CRM.UI.Popup.closeReload();}, 2000);
             } else {
                 console.error(updateRes, logRes);
                 showMessage("API Error. Check console.", true);
