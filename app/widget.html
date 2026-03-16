@@ -364,11 +364,29 @@ ZOHO.embeddedApp.on("PageLoad", async function(data) {
         }
 
         let billableId = null;
-        if (billableType === 'primary') billableId = priId;
-        if (billableType === 'secondary') billableId = secId;
-        if (billableType === 'hmo') billableId = hmoId;
+        let billablePlanName = ""; // Variable to hold the name for our Log string
+        
+        // Determine which plan is billable and grab its ID and Name
+        if (billableType === 'primary') {
+            billableId = priId;
+            billablePlanName = document.getElementById("edit-primary-name").value;
+        }
+        if (billableType === 'secondary') {
+            billableId = secId;
+            billablePlanName = document.getElementById("edit-secondary-name").value;
+        }
+        if (billableType === 'hmo') {
+            billableId = hmoId;
+            billablePlanName = document.getElementById("edit-hmo-name").value;
+        }
 
         const today = new Date().toISOString().split('T')[0];
+        
+        // Construct the Log Name
+        // Note: The standard API name for the Deal Name field is 'Deal_Name'. 
+        // We use a fallback to 'Name' just in case your module was heavily customized.
+        const dealName = currentDealData.Deal_Name || currentDealData.Name || "Unknown Deal";
+        const logName = `${dealName} - ${today} - ${billablePlanName} - ${billableStat}`;
 
         const dealPayload = {
             id: currentRecordId,
@@ -384,6 +402,7 @@ ZOHO.embeddedApp.on("PageLoad", async function(data) {
         };
 
         const logPayload = {
+            Name: logName, // Our newly generated dynamic name!
             Client_Service: { id: currentRecordId },
             Primary_Insurance: priId ? { id: priId } : null,
             Primary_Status: priStat,
@@ -412,7 +431,6 @@ ZOHO.embeddedApp.on("PageLoad", async function(data) {
             showMessage("An error occurred while saving.", true);
         }
     }
-
     function showMessage(msg, isError) {
         const box = document.getElementById("message-box");
         if (!msg) {
