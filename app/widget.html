@@ -152,7 +152,7 @@ l<!DOCTYPE html>
     let searchTimeout = null;
 
     // --- 1. INITIALIZATION ---
-ZOHO.embeddedApp.on("PageLoad", async function(data) {
+    ZOHO.embeddedApp.on("PageLoad", async function(data) {
         
         // Add [0] here to extract the string from the array!
         currentRecordId = data.EntityId[0]; 
@@ -212,19 +212,28 @@ ZOHO.embeddedApp.on("PageLoad", async function(data) {
             if (currentDealData[fieldApi]) {
                 document.getElementById(inputIdName).value = currentDealData[fieldApi].name;
                 document.getElementById(inputIdValue).value = currentDealData[fieldApi].id;
+                return true; // Returns true if a plan exists
             }
+            return false;
         };
 
-        setLookup("Primary_Insurance_Plan", "edit-primary-name", "edit-primary-id");
-        document.getElementById("edit-primary-status").value = currentDealData["Primary_Insurance_Status"] || "";
+        // Primary
+        const hasPri = setLookup("Primary_Insurance_Plan", "edit-primary-name", "edit-primary-id");
+        const priStatus = document.getElementById("edit-primary-status");
+        priStatus.value = currentDealData["Primary_Insurance_Status"] || "";
+        priStatus.disabled = !hasPri; // Disable if no plan exists
 
-        setLookup("Secondary_Insurance_Plans", "edit-secondary-name", "edit-secondary-id");
-        document.getElementById("edit-secondary-status").value = currentDealData["Secondary_Insurance_Status"] || "";
+        // Secondary
+        const hasSec = setLookup("Secondary_Insurance_Plans", "edit-secondary-name", "edit-secondary-id");
+        const secStatus = document.getElementById("edit-secondary-status");
+        secStatus.value = currentDealData["Secondary_Insurance_Status"] || "";
+        secStatus.disabled = !hasSec; // Disable if no plan exists
 
-        setLookup("HMO_Insurance_P", "edit-hmo-name", "edit-hmo-id");
-        document.getElementById("edit-hmo-status").value = currentDealData["HMO_Insurance_Status"] || "";
-        
-        // We will handle Billable via the focus event of the select dropdown
+        // HMO
+        const hasHmo = setLookup("HMO_Insurance_P", "edit-hmo-name", "edit-hmo-id");
+        const hmoStatus = document.getElementById("edit-hmo-status");
+        hmoStatus.value = currentDealData["HMO_Insurance_Status"] || "";
+        hmoStatus.disabled = !hasHmo; // Disable if no plan exists
     }
 
     // --- 4. BUTTON: VERIFY INSURANCE ---
@@ -257,9 +266,18 @@ ZOHO.embeddedApp.on("PageLoad", async function(data) {
         const query = inputElement.value;
         const listDiv = document.getElementById("list-" + inputElement.id);
         
+        // Dynamically figure out which status dropdown matches this input
+        const statusDropdownId = hiddenIdField.replace('-id', '-status');
+        const statusDropdown = document.getElementById(statusDropdownId);
+        
         if (query.length < 2) {
             listDiv.classList.add("hidden");
-            if(query.length === 0) document.getElementById(hiddenIdField).value = ""; 
+            if(query.length === 0) {
+                document.getElementById(hiddenIdField).value = ""; 
+                statusDropdown.value = ""; // Clear the status
+                statusDropdown.disabled = true; // Lock the dropdown again
+                populateBillableOptions(); // Sync billable
+            }
             return;
         }
 
@@ -280,6 +298,9 @@ ZOHO.embeddedApp.on("PageLoad", async function(data) {
                     item.onclick = function() {
                         inputElement.value = plan.Name;
                         document.getElementById(hiddenIdField).value = plan.id;
+                        
+                        statusDropdown.disabled = false; // Unlock the status dropdown!
+                        
                         listDiv.classList.add("hidden");
                         populateBillableOptions();
                     };
@@ -364,9 +385,8 @@ ZOHO.embeddedApp.on("PageLoad", async function(data) {
         }
 
         let billableId = null;
-        let billablePlanName = ""; // Variable to hold the name for our Log string
+        let billablePlanName = ""; 
         
-        // Determine which plan is billable and grab its ID and Name
         if (billableType === 'primary') {
             billableId = priId;
             billablePlanName = document.getElementById("edit-primary-name").value;
@@ -382,9 +402,6 @@ ZOHO.embeddedApp.on("PageLoad", async function(data) {
 
         const today = new Date().toISOString().split('T')[0];
         
-        // Construct the Log Name
-        // Note: The standard API name for the Deal Name field is 'Deal_Name'. 
-        // We use a fallback to 'Name' just in case your module was heavily customized.
         const dealName = currentDealData.Deal_Name || currentDealData.Name || "Unknown Deal";
         const logName = `${dealName} - ${today} - ${billablePlanName} - ${billableStat}`;
 
@@ -402,7 +419,7 @@ ZOHO.embeddedApp.on("PageLoad", async function(data) {
         };
 
         const logPayload = {
-            Name: logName, // Our newly generated dynamic name!
+            Name: logName,
             Client_Service: { id: currentRecordId },
             Primary_Insurance: priId ? { id: priId } : null,
             Primary_Status: priStat,
@@ -431,6 +448,7 @@ ZOHO.embeddedApp.on("PageLoad", async function(data) {
             showMessage("An error occurred while saving.", true);
         }
     }
+    
     function showMessage(msg, isError) {
         const box = document.getElementById("message-box");
         if (!msg) {
