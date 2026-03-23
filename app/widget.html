@@ -5,47 +5,76 @@
     <title>Insurance Verification</title>
     <script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; background: #f4f5f7; font-size: 14px; }
-        .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 700px; margin: 0 auto; }
-        h2 { margin-top: 0; color: #111; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        :root {
+            --primary: #0066ff;
+            --primary-hover: #0052cc;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 30px 20px; background: var(--bg); font-size: 14px; color: var(--text-dark); margin: 0; }
+        .container { background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 750px; margin: 0 auto; border: 1px solid var(--border); }
+        
+        h2 { margin-top: 0; color: var(--text-dark); border-bottom: 2px solid var(--bg); padding-bottom: 15px; font-size: 22px; font-weight: 700; }
+        
+        /* Section Cards */
+        .section-card { border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; background: #fafbfc; transition: all 0.3s ease; }
+        .section-card:hover { border-color: #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .section-title { font-size: 16px; font-weight: 700; color: var(--text-dark); margin: 0; display: flex; align-items: center; gap: 8px; }
         
         /* Grid Layout for Fields */
-        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; align-items: end; }
-        .field-group { position: relative; }
-        label { display: block; font-weight: 600; color: #555; margin-bottom: 5px; font-size: 12px; text-transform: uppercase; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; align-items: start; }
+        .field-row.three-col { grid-template-columns: 1.5fr 1fr 1fr; }
+        .field-group { position: relative; display: flex; flex-direction: column; }
+        label { font-weight: 600; color: var(--text-muted); margin-bottom: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
         
         /* Inputs & Read-only text */
-        .val-display { padding: 8px 0; border-bottom: 1px solid #ddd; min-height: 20px; color: #333; }
-        input[type="text"], select, input[type="date"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        input[disabled], select[disabled] { background: #f9f9f9; color: #777; }
+        .val-display { padding: 10px 12px; background: white; border: 1px solid var(--border); border-radius: 6px; min-height: 20px; color: var(--text-dark); font-weight: 500; }
+        input[type="text"], select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; color: var(--text-dark); transition: border 0.2s, box-shadow 0.2s; background: white; }
+        input[type="text"]:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.15); }
+        input[disabled], select[disabled] { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; border-color: var(--border); }
         
+        /* Toggle Select */
+        .toggle-select { width: 120px; font-weight: bold; }
+
         /* Lookup wrapper with inline clear button */
         .lookup-wrapper { position: relative; display: flex; align-items: center; }
-        .lookup-wrapper input[type="text"] { padding-right: 30px; }
-        .lookup-clear { position: absolute; right: 8px; cursor: pointer; color: #aaa; font-size: 14px; padding: 4px; display: none; font-weight: bold; }
-        .lookup-clear:hover { color: #d9534f; }
+        .lookup-wrapper input[type="text"] { padding-right: 35px; }
+        .lookup-clear { position: absolute; right: 10px; cursor: pointer; color: #94a3b8; font-size: 14px; padding: 4px; display: none; font-weight: bold; transition: color 0.2s; }
+        .lookup-clear:hover { color: var(--danger); }
 
-        /* Hidden elements */
+        /* Hidden elements with smooth transition class */
         .hidden { display: none !important; }
+        .slide-section { transition: max-height 0.4s ease-out, opacity 0.3s ease-out; opacity: 1; max-height: 1000px; overflow: visible; }
+        .slide-section.collapsed { max-height: 0; opacity: 0; margin-top: 0; padding-top: 0; border-top: none; pointer-events: none; overflow: hidden; }
         
         /* Autocomplete Dropdown */
-        .autocomplete-list { position: absolute; z-index: 99; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 0 0 4px 4px; }
-        .autocomplete-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
-        .autocomplete-item:hover { background-color: #f0f8ff; }
+        .autocomplete-list { position: absolute; z-index: 99; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border); max-height: 200px; overflow-y: auto; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-radius: 0 0 8px 8px; margin-top: 4px; }
+        .autocomplete-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid var(--bg); font-weight: 500; }
+        .autocomplete-item:hover { background-color: #eff6ff; color: var(--primary); }
 
         /* Buttons */
-        .actions { margin-top: 25px; display: flex; gap: 10px; justify-content: flex-end; }
-        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.2s; }
-        .btn-primary { background: #0073e6; color: white; }
-        .btn-primary:hover { background: #005bb5; }
-        .btn-secondary { background: #e0e0e0; color: #333; }
-        .btn-secondary:hover { background: #ccc; }
-        .btn-success { background: #28a745; color: white; }
+        .actions { margin-top: 30px; display: flex; gap: 12px; justify-content: flex-end; padding-top: 20px; border-top: 1px solid var(--border); }
+        button { padding: 10px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(0, 102, 255, 0.2); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0, 102, 255, 0.3); }
+        .btn-secondary { background: white; color: var(--text-dark); border: 1px solid #cbd5e1; }
+        .btn-secondary:hover { background: var(--bg); border-color: #94a3b8; }
+        .btn-success { background: var(--success); color: white; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2); }
+        .btn-success:hover { background: #059669; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3); }
         
         /* Alerts */
-        #message-box { margin-top: 15px; padding: 10px; border-radius: 4px; text-align: center; font-weight: bold; line-height: 1.4; }
-        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        #message-box { margin-bottom: 20px; padding: 12px 15px; border-radius: 8px; text-align: center; font-weight: 600; line-height: 1.4; font-size: 14px; }
+        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        
+        hr { border: 0; border-top: 1px solid var(--border); margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -56,88 +85,133 @@
     
     <div id="read-only-view">
         <div id="ro-fields-container"></div>
-        <div class="field-row" style="margin-top: 20px;">
-            <div class="field-group">
-                <label>Last Eligible Check Date</label>
-                <div class="val-display" id="ro-last-check"></div>
+        <div class="section-card" style="margin-top: 20px;">
+            <div class="field-row">
+                <div class="field-group">
+                    <label>Last Eligible Check Date</label>
+                    <div class="val-display" id="ro-last-check"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="edit-view" class="hidden">
-        <div class="field-row">
-            <div class="field-group">
-                <label>Primary Insurance Plan</label>
-                <div class="lookup-wrapper">
-                    <input type="text" id="edit-primary-name" placeholder="Search Primary..." onclick="openDropdown(this, 'edit-primary-id')" oninput="searchPlan(this, 'edit-primary-id')" autocomplete="off">
-                    <span class="lookup-clear" id="clear-primary" onclick="clearSelection('primary')">✖</span>
-                </div>
-                <input type="hidden" id="edit-primary-id">
-                <div class="autocomplete-list hidden" id="list-edit-primary-name"></div>
+        
+        <div class="section-card">
+            <div class="section-header">
+                <h3 class="section-title">Primary Insurance</h3>
             </div>
-            <div class="field-group">
-                <label>Primary Status</label>
-                <select id="edit-primary-status">
-                    <option value="">-None-</option>
-                    <option value="Active">Active</option>
-                    <option value="Obtaining Policy">Obtaining Policy</option>
-                    <option value="Pending Verification">Pending Verification</option>
-                    <option value="Expired">Expired</option>
-                    <option value="Pending">Pending</option>
-                    <option value="ACTION REQUIRED">ACTION REQUIRED</option>
-                </select>
+            <div class="field-row three-col">
+                <div class="field-group">
+                    <label>Insurance Plan</label>
+                    <div class="lookup-wrapper">
+                        <input type="text" id="edit-primary-name" placeholder="Search Primary..." onclick="openDropdown(this, 'edit-primary-id')" oninput="searchPlan(this, 'edit-primary-id')" autocomplete="off">
+                        <span class="lookup-clear" id="clear-primary" onclick="clearSelection('primary')">✖</span>
+                    </div>
+                    <input type="hidden" id="edit-primary-id">
+                    <div class="autocomplete-list hidden" id="list-edit-primary-name"></div>
+                </div>
+                <div class="field-group">
+                    <label>Status</label>
+                    <select id="edit-primary-status">
+                        <option value="">-None-</option>
+                        <option value="Active">Active</option>
+                        <option value="Obtaining Policy">Obtaining Policy</option>
+                        <option value="Pending Verification">Pending Verification</option>
+                        <option value="Expired">Expired</option>
+                        <option value="Pending">Pending</option>
+                        <option value="ACTION REQUIRED">ACTION REQUIRED</option>
+                    </select>
+                </div>
+                </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <h3 class="section-title">Secondary Insurance</h3>
+                <div class="field-group">
+                    <select id="edit-sec-has" class="toggle-select" onchange="toggleSection('secondary')">
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="section-secondary-details" class="slide-section collapsed">
+                <hr>
+                <div class="field-row three-col">
+                    <div class="field-group">
+                        <label>Insurance Plan</label>
+                        <div class="lookup-wrapper">
+                            <input type="text" id="edit-secondary-name" placeholder="Search Secondary..." onclick="openDropdown(this, 'edit-secondary-id')" oninput="searchPlan(this, 'edit-secondary-id')" autocomplete="off">
+                            <span class="lookup-clear" id="clear-secondary" onclick="clearSelection('secondary')">✖</span>
+                        </div>
+                        <input type="hidden" id="edit-secondary-id">
+                        <div class="autocomplete-list hidden" id="list-edit-secondary-name"></div>
+                    </div>
+                    <div class="field-group">
+                        <label>Status</label>
+                        <select id="edit-secondary-status">
+                            <option value="">-None-</option>
+                            <option value="Active">Active</option>
+                            <option value="Obtaining Policy">Obtaining Policy</option>
+                            <option value="Pending Verification">Pending Verification</option>
+                            <option value="Expired">Expired</option>
+                            <option value="Pending">Pending</option>
+                            <option value="ACTION REQUIRED">ACTION REQUIRED</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label>Member ID</label>
+                        <input type="text" id="edit-secondary-member-id" placeholder="Enter Member ID" autocomplete="off">
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="field-row">
-            <div class="field-group">
-                <label>Secondary Insurance Plan</label>
-                <div class="lookup-wrapper">
-                    <input type="text" id="edit-secondary-name" placeholder="Search Secondary..." onclick="openDropdown(this, 'edit-secondary-id')" oninput="searchPlan(this, 'edit-secondary-id')" autocomplete="off">
-                    <span class="lookup-clear" id="clear-secondary" onclick="clearSelection('secondary')">✖</span>
+        <div class="section-card">
+            <div class="section-header">
+                <h3 class="section-title">HMO Insurance</h3>
+                <div class="field-group">
+                    <select id="edit-hmo-has" class="toggle-select" onchange="toggleSection('hmo')">
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                    </select>
                 </div>
-                <input type="hidden" id="edit-secondary-id">
-                <div class="autocomplete-list hidden" id="list-edit-secondary-name"></div>
             </div>
-            <div class="field-group">
-                <label>Secondary Status</label>
-                <select id="edit-secondary-status">
-                    <option value="">-None-</option>
-                    <option value="Active">Active</option>
-                    <option value="Obtaining Policy">Obtaining Policy</option>
-                    <option value="Pending Verification">Pending Verification</option>
-                    <option value="Expired">Expired</option>
-                    <option value="Pending">Pending</option>
-                    <option value="ACTION REQUIRED">ACTION REQUIRED</option>
-                </select>
+            
+            <div id="section-hmo-details" class="slide-section collapsed">
+                <hr>
+                <div class="field-row three-col">
+                    <div class="field-group">
+                        <label>Insurance Plan</label>
+                        <div class="lookup-wrapper">
+                            <input type="text" id="edit-hmo-name" placeholder="Search HMO..." onclick="openDropdown(this, 'edit-hmo-id')" oninput="searchPlan(this, 'edit-hmo-id')" autocomplete="off">
+                            <span class="lookup-clear" id="clear-hmo" onclick="clearSelection('hmo')">✖</span>
+                        </div>
+                        <input type="hidden" id="edit-hmo-id">
+                        <div class="autocomplete-list hidden" id="list-edit-hmo-name"></div>
+                    </div>
+                    <div class="field-group">
+                        <label>Status</label>
+                        <select id="edit-hmo-status">
+                            <option value="">-None-</option>
+                            <option value="Active">Active</option>
+                            <option value="Obtaining Policy">Obtaining Policy</option>
+                            <option value="Pending Verification">Pending Verification</option>
+                            <option value="Expired">Expired</option>
+                            <option value="Pending">Pending</option>
+                            <option value="ACTION REQUIRED">ACTION REQUIRED</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label>Member ID</label>
+                        <input type="text" id="edit-hmo-member-id" placeholder="Enter Member ID" autocomplete="off">
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="field-row">
-            <div class="field-group">
-                <label>HMO Insurance Plan</label>
-                <div class="lookup-wrapper">
-                    <input type="text" id="edit-hmo-name" placeholder="Search HMO..." onclick="openDropdown(this, 'edit-hmo-id')" oninput="searchPlan(this, 'edit-hmo-id')" autocomplete="off">
-                    <span class="lookup-clear" id="clear-hmo" onclick="clearSelection('hmo')">✖</span>
-                </div>
-                <input type="hidden" id="edit-hmo-id">
-                <div class="autocomplete-list hidden" id="list-edit-hmo-name"></div>
-            </div>
-            <div class="field-group">
-                <label>HMO Status</label>
-                <select id="edit-hmo-status">
-                    <option value="">-None-</option>
-                    <option value="Active">Active</option>
-                    <option value="Obtaining Policy">Obtaining Policy</option>
-                    <option value="Pending Verification">Pending Verification</option>
-                    <option value="Expired">Expired</option>
-                    <option value="Pending">Pending</option>
-                    <option value="ACTION REQUIRED">ACTION REQUIRED</option>
-                </select>
-            </div>
-        </div>
-
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
     </div>
 
     <div class="actions" id="action-buttons">
@@ -172,17 +246,23 @@
             const response = await ZOHO.CRM.API.getRecord({Entity: "Deals", RecordID: currentRecordId});
             currentDealData = response.data[0];
             
-            // Capture the "Old" Data (including IDs) for validation and logging
+            // Capture all old data for validation and logging
             oldInsuranceData = {
                 priId: currentDealData.Primary_Insurance_Plan ? currentDealData.Primary_Insurance_Plan.id : "",
                 priName: currentDealData.Primary_Insurance_Plan ? currentDealData.Primary_Insurance_Plan.name : "",
                 priStat: currentDealData.Primary_Insurance_Status || "",
+                
+                secHas: currentDealData.Do_you_have_a_secondary_insurance_plan || "No",
                 secId: currentDealData.Secondary_Insurance_Plans ? currentDealData.Secondary_Insurance_Plans.id : "",
                 secName: currentDealData.Secondary_Insurance_Plans ? currentDealData.Secondary_Insurance_Plans.name : "",
                 secStat: currentDealData.Secondary_Insurance_Status || "",
+                secMemId: currentDealData.Secondary_Insurance_ID || "",
+                
+                hmoHas: currentDealData.Do_you_have_an_HMO_insurance_plan || "No",
                 hmoId: currentDealData.HMO_Insurance_P ? currentDealData.HMO_Insurance_P.id : "",
                 hmoName: currentDealData.HMO_Insurance_P ? currentDealData.HMO_Insurance_P.name : "",
-                hmoStat: currentDealData.HMO_Insurance_Status || ""
+                hmoStat: currentDealData.HMO_Insurance_Status || "",
+                hmoMemId: currentDealData.HMO_Insurance_ID || ""
             };
             
             renderReadOnlyView();
@@ -200,33 +280,64 @@
         const container = document.getElementById("ro-fields-container");
         container.innerHTML = ""; 
 
-        const fieldsToCheck = [
-            { plan: "Primary_Insurance_Plan", status: "Primary_Insurance_Status", label: "Primary" },
-            { plan: "Secondary_Insurance_Plans", status: "Secondary_Insurance_Status", label: "Secondary" },
-            { plan: "HMO_Insurance_P", status: "HMO_Insurance_Status", label: "HMO" }
-        ];
+        // Primary is always rendered if it has data
+        if (currentDealData.Primary_Insurance_Plan && currentDealData.Primary_Insurance_Plan.id) {
+            appendReadOnlyBox("Primary", currentDealData.Primary_Insurance_Plan.name, currentDealData.Primary_Insurance_Status);
+        }
 
-        fieldsToCheck.forEach(f => {
-            if (currentDealData[f.plan] && currentDealData[f.plan].id) {
-                const planName = currentDealData[f.plan].name;
-                const statusVal = currentDealData[f.status] || "No Status";
-                
-                container.innerHTML += `
-                    <div class="field-row">
-                        <div class="field-group">
-                            <label>${f.label} Insurance Plan</label>
-                            <div class="val-display">${planName}</div>
-                        </div>
-                        <div class="field-group">
-                            <label>${f.label} Status</label>
-                            <div class="val-display">${statusVal}</div>
-                        </div>
-                    </div>
-                `;
+        // Secondary Conditional Render
+        if (oldInsuranceData.secHas === "Yes") {
+            const planName = currentDealData.Secondary_Insurance_Plans ? currentDealData.Secondary_Insurance_Plans.name : "None";
+            appendReadOnlyBox("Secondary", planName, currentDealData.Secondary_Insurance_Status, currentDealData.Secondary_Insurance_ID);
+        }
+
+        // HMO Conditional Render
+        if (oldInsuranceData.hmoHas === "Yes") {
+            const planName = currentDealData.HMO_Insurance_P ? currentDealData.HMO_Insurance_P.name : "None";
+            appendReadOnlyBox("HMO", planName, currentDealData.HMO_Insurance_Status, currentDealData.HMO_Insurance_ID);
+        }
+
+        // Format Date to MM/DD/YYYY
+        let rawDate = currentDealData["Last_Eligible_Check_Date"];
+        let displayDate = "Never";
+        if (rawDate) {
+            const parts = rawDate.split("-");
+            if (parts.length === 3) {
+                displayDate = `${parts[1]}/${parts[2]}/${parts[0]}`;
+            } else {
+                displayDate = rawDate;
             }
-        });
+        }
+        document.getElementById("ro-last-check").innerText = displayDate;
+    }
 
-        document.getElementById("ro-last-check").innerText = currentDealData["Last_Eligible_Check_Date"] || "Never";
+    function appendReadOnlyBox(label, planName, statusVal, memberIdVal = null) {
+        const container = document.getElementById("ro-fields-container");
+        let html = `
+            <div class="section-card">
+                <h3 class="section-title" style="margin-bottom: 15px;">${label} Insurance</h3>
+                <div class="field-row ${memberIdVal ? 'three-col' : ''}">
+                    <div class="field-group">
+                        <label>Insurance Plan</label>
+                        <div class="val-display">${planName}</div>
+                    </div>
+                    <div class="field-group">
+                        <label>Status</label>
+                        <div class="val-display">${statusVal || "No Status"}</div>
+                    </div>
+        `;
+        
+        if (memberIdVal !== null) {
+            html += `
+                    <div class="field-group">
+                        <label>Member ID</label>
+                        <div class="val-display">${memberIdVal || "Not Provided"}</div>
+                    </div>
+            `;
+        }
+        
+        html += `</div></div>`;
+        container.innerHTML += html;
     }
 
     // --- 3. POPULATE EDIT FORM ---
@@ -241,23 +352,47 @@
             return false;
         };
 
+        // Primary
         const hasPri = setLookup("Primary_Insurance_Plan", "edit-primary-name", "edit-primary-id", "primary");
         const priStatus = document.getElementById("edit-primary-status");
         priStatus.value = currentDealData["Primary_Insurance_Status"] || "";
         priStatus.disabled = !hasPri;
 
+        // Secondary
+        document.getElementById("edit-sec-has").value = oldInsuranceData.secHas;
         const hasSec = setLookup("Secondary_Insurance_Plans", "edit-secondary-name", "edit-secondary-id", "secondary");
         const secStatus = document.getElementById("edit-secondary-status");
         secStatus.value = currentDealData["Secondary_Insurance_Status"] || "";
         secStatus.disabled = !hasSec;
+        document.getElementById("edit-secondary-member-id").value = oldInsuranceData.secMemId;
+        toggleSection('secondary'); // Expand/collapse based on initial value
 
+        // HMO
+        document.getElementById("edit-hmo-has").value = oldInsuranceData.hmoHas;
         const hasHmo = setLookup("HMO_Insurance_P", "edit-hmo-name", "edit-hmo-id", "hmo");
         const hmoStatus = document.getElementById("edit-hmo-status");
         hmoStatus.value = currentDealData["HMO_Insurance_Status"] || "";
         hmoStatus.disabled = !hasHmo; 
+        document.getElementById("edit-hmo-member-id").value = oldInsuranceData.hmoMemId;
+        toggleSection('hmo'); // Expand/collapse based on initial value
     }
 
-    // --- 4. BUTTON: VERIFY INSURANCE ---
+    // --- 4. CONDITIONAL UI TOGGLE ---
+    function toggleSection(type) {
+        const selectVal = document.getElementById(`edit-${type === 'secondary' ? 'sec' : 'hmo'}-has`).value;
+        const detailsContainer = document.getElementById(`section-${type}-details`);
+        
+        if (selectVal === "Yes") {
+            detailsContainer.classList.remove("collapsed");
+        } else {
+            detailsContainer.classList.add("collapsed");
+            // Auto-clear the fields if they select "No" to avoid hidden orphaned data
+            clearSelection(type);
+            document.getElementById(`edit-${type}-member-id`).value = "";
+        }
+    }
+
+    // --- 5. BUTTON ACTIONS ---
     async function verifyInsurance() {
         const today = new Date().toISOString().split('T')[0];
         await ZOHO.CRM.API.updateRecord({
@@ -270,7 +405,6 @@
         ZOHO.CRM.UI.Popup.closeReload();
     }
 
-    // --- 5. BUTTON: UPDATE INSURANCE ---
     function toggleEditMode() {
         document.getElementById("read-only-view").classList.add("hidden");
         document.getElementById("action-buttons").classList.add("hidden");
@@ -307,10 +441,7 @@
         const clearBtn = document.getElementById(`clear-${typeStr}`);
         
         if (query.length === 0) {
-            document.getElementById(hiddenIdField).value = ""; 
-            statusDropdown.value = ""; 
-            statusDropdown.disabled = true; 
-            clearBtn.style.display = "none";
+            clearSelection(typeStr);
             renderDropdown(inputElement, hiddenIdField, cachedPlans);
             return;
         } else {
@@ -351,10 +482,19 @@
                 item.onclick = function(e) {
                     e.stopPropagation();
                     inputElement.value = plan.Name;
-                    document.getElementById(hiddenIdField).value = plan.id;
+                    const oldId = document.getElementById(hiddenIdField).value;
+                    const newId = plan.id;
+                    
+                    document.getElementById(hiddenIdField).value = newId;
                     statusDropdown.disabled = false; 
                     document.getElementById(`clear-${typeStr}`).style.display = "block";
                     listDiv.classList.add("hidden");
+                    
+                    // Logic Requirement: Clear Member ID if the plan changes to force them to enter new one
+                    if (oldId && oldId !== newId && document.getElementById(`edit-${typeStr}-member-id`)) {
+                        document.getElementById(`edit-${typeStr}-member-id`).value = "";
+                        document.getElementById(`edit-${typeStr}-member-id`).focus();
+                    }
                 };
                 listDiv.appendChild(item);
             });
@@ -382,20 +522,40 @@
         
         const priId = document.getElementById("edit-primary-id").value;
         const priStat = document.getElementById("edit-primary-status").value;
+        
+        const secHas = document.getElementById("edit-sec-has").value;
         const secId = document.getElementById("edit-secondary-id").value;
         const secStat = document.getElementById("edit-secondary-status").value;
+        const secMemId = document.getElementById("edit-secondary-member-id").value;
+        
+        const hmoHas = document.getElementById("edit-hmo-has").value;
         const hmoId = document.getElementById("edit-hmo-id").value;
         const hmoStat = document.getElementById("edit-hmo-status").value;
+        const hmoMemId = document.getElementById("edit-hmo-member-id").value;
 
         // Validations
-        if (priId && !priStat) return showMessage("Primary Status is required.", true);
-        if (secId && !secStat) return showMessage("Secondary Status is required.", true);
-        if (hmoId && !hmoStat) return showMessage("HMO Status is required.", true);
+        if (priId && !priStat) return showMessage("Primary Status is required since a Primary Plan is selected.", true);
+        
+        if (secHas === "Yes") {
+            if (!secId) return showMessage("Secondary Insurance Plan is required.", true);
+            if (!secStat) return showMessage("Secondary Status is required.", true);
+            if (!secMemId || secMemId.trim() === "") return showMessage("Secondary Member ID is required.", true);
+        }
 
-        // Change Verification Logic
+        if (hmoHas === "Yes") {
+            if (!hmoId) return showMessage("HMO Insurance Plan is required.", true);
+            if (!hmoStat) return showMessage("HMO Status is required.", true);
+            if (!hmoMemId || hmoMemId.trim() === "") return showMessage("HMO Member ID is required.", true);
+        }
+
+        // Change Verification Logic (Excluding Member IDs)
         let hasChanges = false;
         if (priId !== oldInsuranceData.priId || priStat !== oldInsuranceData.priStat) hasChanges = true;
+        
+        if (secHas !== oldInsuranceData.secHas) hasChanges = true;
         if (secId !== oldInsuranceData.secId || secStat !== oldInsuranceData.secStat) hasChanges = true;
+        
+        if (hmoHas !== oldInsuranceData.hmoHas) hasChanges = true;
         if (hmoId !== oldInsuranceData.hmoId || hmoStat !== oldInsuranceData.hmoStat) hasChanges = true;
 
         if (!hasChanges) {
@@ -404,23 +564,29 @@
 
         const today = new Date().toISOString().split('T')[0];
         
-        // Setup Old Billable Names
+        // Grab Billable Plan/Status for Log Naming
         const billablePlanName = currentDealData.Billable_Insurance_Plan ? currentDealData.Billable_Insurance_Plan.name : "";
         const billableStat = currentDealData.Insurance_Status || "";
-
         const dealName = currentDealData.Deal_Name || currentDealData.Name || "Unknown Deal";
         const logName = `${dealName} - ${today} - ${billablePlanName || "No Billable"} - ${billableStat || "No Status"}`;
 
-        // Deal Payload strictly excludes Billable fields so they remain untouched
+        // Deal Payload 
         const dealPayload = {
             id: currentRecordId,
             Last_Eligible_Check_Date: today,
+            
             Primary_Insurance_Plan: priId ? { id: priId } : null,
             Primary_Insurance_Status: priStat,
-            Secondary_Insurance_Plans: secId ? { id: secId } : null,
-            Secondary_Insurance_Status: secStat,
-            HMO_Insurance_P: hmoId ? { id: hmoId } : null,
-            HMO_Insurance_Status: hmoStat
+            
+            Do_you_have_a_secondary_insurance_plan: secHas,
+            Secondary_Insurance_Plans: (secHas === "Yes" && secId) ? { id: secId } : null,
+            Secondary_Insurance_Status: (secHas === "Yes") ? secStat : "",
+            Secondary_Insurance_ID: (secHas === "Yes") ? secMemId : "",
+            
+            Do_you_have_an_HMO_insurance_plan: hmoHas,
+            HMO_Insurance_P: (hmoHas === "Yes" && hmoId) ? { id: hmoId } : null,
+            HMO_Insurance_Status: (hmoHas === "Yes") ? hmoStat : "",
+            HMO_Insurance_ID: (hmoHas === "Yes") ? hmoMemId : ""
         };
 
         const logPayload = {
@@ -428,10 +594,10 @@
             Client_Service: { id: currentRecordId },
             Primary_Insurance: priId ? { id: priId } : null,
             Primary_Status: priStat,
-            Seconday_Insurance: secId ? { id: secId } : null, 
-            Secondary_Status: secStat,
-            HMO_Insurance: hmoId ? { id: hmoId } : null,
-            HMO_Status: hmoStat,
+            Seconday_Insurance: (secHas === "Yes" && secId) ? { id: secId } : null, 
+            Secondary_Status: (secHas === "Yes") ? secStat : "",
+            HMO_Insurance: (hmoHas === "Yes" && hmoId) ? { id: hmoId } : null,
+            HMO_Status: (hmoHas === "Yes") ? hmoStat : "",
             
             // Text logs of the Old Plans before update
             Old_Primary_Insurance: oldInsuranceData.priName,
@@ -441,7 +607,7 @@
             Old_HMO_Insurance: oldInsuranceData.hmoName,
             Old_HMO_Status: oldInsuranceData.hmoStat,
 
-            // New logic: Do not link billable lookups, populate text instead
+            // Old Billable logs
             Old_Billable_Insurance: billablePlanName,
             Old_Billable_Status: billableStat,
             Last_Verified_Date: today
