@@ -123,7 +123,11 @@
                         <option value="ACTION REQUIRED">ACTION REQUIRED</option>
                     </select>
                 </div>
+                <div class="field-group">
+                    <label>Member ID</label>
+                    <input type="text" id="edit-primary-member-id" placeholder="Enter Member ID" autocomplete="off">
                 </div>
+            </div>
         </div>
 
         <div class="section-card">
@@ -251,6 +255,7 @@
                 priId: currentDealData.Primary_Insurance_Plan ? currentDealData.Primary_Insurance_Plan.id : "",
                 priName: currentDealData.Primary_Insurance_Plan ? currentDealData.Primary_Insurance_Plan.name : "",
                 priStat: currentDealData.Primary_Insurance_Status || "",
+                priMemId: currentDealData.Primary_Insurance_ID || "",
                 
                 secHas: currentDealData.Do_you_have_a_secondary_insurance_plan || "No",
                 secId: currentDealData.Secondary_Insurance_Plans ? currentDealData.Secondary_Insurance_Plans.id : "",
@@ -282,7 +287,7 @@
 
         // Primary is always rendered if it has data
         if (currentDealData.Primary_Insurance_Plan && currentDealData.Primary_Insurance_Plan.id) {
-            appendReadOnlyBox("Primary", currentDealData.Primary_Insurance_Plan.name, currentDealData.Primary_Insurance_Status);
+            appendReadOnlyBox("Primary", currentDealData.Primary_Insurance_Plan.name, currentDealData.Primary_Insurance_Status, currentDealData.Primary_Insurance_ID || "");
         }
 
         // Secondary Conditional Render
@@ -316,7 +321,7 @@
         let html = `
             <div class="section-card">
                 <h3 class="section-title" style="margin-bottom: 15px;">${label} Insurance</h3>
-                <div class="field-row ${memberIdVal ? 'three-col' : ''}">
+                <div class="field-row ${memberIdVal !== null ? 'three-col' : ''}">
                     <div class="field-group">
                         <label>Insurance Plan</label>
                         <div class="val-display">${planName}</div>
@@ -357,6 +362,7 @@
         const priStatus = document.getElementById("edit-primary-status");
         priStatus.value = currentDealData["Primary_Insurance_Status"] || "";
         priStatus.disabled = !hasPri;
+        document.getElementById("edit-primary-member-id").value = oldInsuranceData.priMemId;
 
         // Secondary
         document.getElementById("edit-sec-has").value = oldInsuranceData.secHas;
@@ -423,6 +429,10 @@
         statusDropdown.disabled = true;
         
         document.getElementById(`list-edit-${type}-name`).classList.add("hidden");
+        
+        // Ensure clearing plan clears member ID
+        const memIdField = document.getElementById(`edit-${type}-member-id`);
+        if (memIdField) memIdField.value = "";
     }
 
     function openDropdown(inputElement, hiddenIdField) {
@@ -522,6 +532,7 @@
         
         const priId = document.getElementById("edit-primary-id").value;
         const priStat = document.getElementById("edit-primary-status").value;
+        const priMemId = document.getElementById("edit-primary-member-id").value;
         
         const secHas = document.getElementById("edit-sec-has").value;
         const secId = document.getElementById("edit-secondary-id").value;
@@ -534,7 +545,10 @@
         const hmoMemId = document.getElementById("edit-hmo-member-id").value;
 
         // Validations
-        if (priId && !priStat) return showMessage("Primary Status is required since a Primary Plan is selected.", true);
+        if (priId) {
+            if (!priStat) return showMessage("Primary Status is required since a Primary Plan is selected.", true);
+            if (!priMemId || priMemId.trim() === "") return showMessage("Primary Member ID is required.", true);
+        }
         
         if (secHas === "Yes") {
             if (!secId) return showMessage("Secondary Insurance Plan is required.", true);
@@ -548,7 +562,6 @@
             if (!hmoMemId || hmoMemId.trim() === "") return showMessage("HMO Member ID is required.", true);
         }
 
-        // Change Verification Logic (Excluding Member IDs)
         let hasChanges = false;
         if (priId !== oldInsuranceData.priId || priStat !== oldInsuranceData.priStat) hasChanges = true;
         
@@ -577,6 +590,7 @@
             
             Primary_Insurance_Plan: priId ? { id: priId } : null,
             Primary_Insurance_Status: priStat,
+            Primary_Insurance_ID: priMemId,
             
             Do_you_have_a_secondary_insurance_plan: secHas,
             Secondary_Insurance_Plans: (secHas === "Yes" && secId) ? { id: secId } : null,
